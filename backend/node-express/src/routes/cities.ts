@@ -23,9 +23,14 @@ const router = Router();
 //
 // ============================================================
 
+// Gets all cities
 router.get('/', (_req, res) => {
-  // TODO: Replace with your implementation
-  res.status(501).json({ error: 'Not implemented yet' });
+  try {
+    const cities = CityModel.getAll();
+    res.json(cities);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve cities' });
+  }
 });
 
 export default router;

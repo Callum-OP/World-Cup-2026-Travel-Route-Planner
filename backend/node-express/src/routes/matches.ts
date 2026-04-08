@@ -30,9 +30,18 @@ const router = Router();
 //
 // ============================================================
 
-router.get('/', (_req, res) => {
-  // TODO: Replace with your implementation
-  res.status(501).json({ error: 'Not implemented yet' });
+// Get all matches
+router.get('/', (req, res) => {
+  try {
+    const { city, date } = req.query;
+    const matches = MatchModel.getAll({
+      city: city as string | undefined,
+      date: date as string | undefined,
+    });
+    res.json(matches);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve matches' });
+  }
 });
 
 // ============================================================
@@ -46,9 +55,18 @@ router.get('/', (_req, res) => {
 //
 // ============================================================
 
-router.get('/:id', (_req, res) => {
-  // TODO: Replace with your implementation
-  res.status(501).json({ error: 'Not implemented yet' });
+// Get specific match by ID
+router.get('/:id', (req, res) => {
+  try {
+    const match = MatchModel.getById(req.params.id);
+    if (!match) {
+      res.status(404).json({ error: 'Match not found' });
+      return;
+    }
+    res.json(match);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve match' });
+  }
 });
 
 export default router;
