@@ -33,9 +33,26 @@ const router = Router();
 //
 // ============================================================
 
+// Get best route
 router.post('/optimise', (req, res) => {
-  // TODO: Replace with your implementation
-  res.status(200).json({});
+  try {
+    const { matchIds, originCityId } = req.body;
+
+    if (!matchIds || !Array.isArray(matchIds) || matchIds.length === 0) {
+      res.status(400).json({ error: 'matchIds must be a non-empty array' });
+      return;
+    }
+
+    const matches = MatchModel.getByIds(matchIds);
+    const originCity = originCityId ? CityModel.getById(originCityId) : undefined;
+
+    const strategy = new NearestNeighbourStrategy();
+    const route = strategy.optimise(matches, originCity);
+
+    res.json(route);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to optimise route' });
+  }
 });
 
 // ============================================================

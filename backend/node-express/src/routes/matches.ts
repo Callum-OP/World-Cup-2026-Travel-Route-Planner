@@ -57,16 +57,16 @@ router.get('/', (req, res) => {
 
 // Get specific match by ID
 router.get('/:id', (req, res) => {
-  try {
-    const match = MatchModel.getById(req.params.id);
-    if (!match) {
-      res.status(404).json({ error: 'Match not found' });
-      return;
+    try {
+      const match = MatchModel.getById(req.params.id);
+      if (!match) {
+        res.status(404).json({ error: 'Match not found' });
+        return;
+      }
+      res.json(match);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to retrieve match' });
     }
-    res.json(match);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to retrieve match' });
-  }
 });
 
 export default router;
