@@ -2,6 +2,8 @@ import { Router } from 'express';
 import * as MatchModel from '../models/Match';
 import * as CityModel from '../models/City';
 import { NearestNeighbourStrategy } from '../strategies/NearestNeighbourStrategy';
+import db from '../db/connection';
+import { calculate } from '../utils/CostCalculator';
 // Tip: You can also import DateOnlyStrategy to compare results
 // import { DateOnlyStrategy } from '../strategies/DateOnlyStrategy';
 
@@ -38,6 +40,7 @@ router.post('/optimise', (req, res) => {
   try {
     const { matchIds, originCityId } = req.body;
 
+    // Validation
     if (!matchIds || !Array.isArray(matchIds) || matchIds.length === 0) {
       res.status(400).json({ error: 'matchIds must be a non-empty array' });
       return;
@@ -88,9 +91,37 @@ router.post('/optimise', (req, res) => {
 //
 // ============================================================
 
+// Give cost breakdown and if it meets the budget
 router.post('/budget', (req, res) => {
-  // TODO: Replace with your implementation
-  res.status(200).json({});
+  try {
+    const { budget, matchIds, originCityId } = req.body;
+
+    // Validation
+    if (!matchIds || !Array.isArray(matchIds) || matchIds.length === 0) {
+      res.status(400).json({ error: 'matchIds must be a non-empty array' });
+      return;
+    }
+    if (!budget || typeof budget !== 'number') {
+      res.status(400).json({ error: 'budget must be a number' });
+      return;
+    }
+
+    const matches = MatchModel.getByIds(matchIds);
+    const originCity = CityModel.getById(originCityId);
+
+    if (!originCity) {
+      res.status(400).json({ error: 'originCityId not found' });
+      return;
+    }
+
+    const flightPrices = db.prepare('SELECT * FROM flight_prices').all() as any[];
+
+    const result = calculate(matches, budget, originCityId, flightPrices, originCity);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to calculate budget' });
+  }
 });
 
 // ============================================================
