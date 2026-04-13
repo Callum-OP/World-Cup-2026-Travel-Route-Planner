@@ -4,6 +4,7 @@ import * as CityModel from '../models/City';
 import { NearestNeighbourStrategy } from '../strategies/NearestNeighbourStrategy';
 import db from '../db/connection';
 import { calculate } from '../utils/CostCalculator';
+import { findBestValue } from '../bonus/BestValueFinder';
 // Tip: You can also import DateOnlyStrategy to compare results
 // import { DateOnlyStrategy } from '../strategies/DateOnlyStrategy';
 
@@ -148,9 +149,31 @@ router.post('/budget', (req, res) => {
 //
 // ============================================================
 
+// Find the best value route/matches based on origin and budget, and add to selection
 router.post('/best-value', (req, res) => {
-  // TODO: Replace with your implementation (BONUS)
-  res.status(200).json({});
-});
+  try {
+    const { budget, originCityId } = req.body;
 
+    if (!budget || typeof budget !== 'number') {
+      res.status(400).json({ error: 'budget must be a number' });
+      return;
+    }
+
+    const allMatches = MatchModel.getAll();
+    const originCity = CityModel.getById(originCityId);
+
+    if (!originCity) {
+      res.status(400).json({ error: 'originCityId not found' });
+      return;
+    }
+
+    const flightPrices = db.prepare('SELECT * FROM flight_prices').all() as any[];
+
+    const result = findBestValue(allMatches, budget, originCityId, flightPrices, originCity);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to find best value route' });
+  }
+});
 export default router;

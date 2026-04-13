@@ -64,8 +64,66 @@ export function findBestValue(
   flightPrices: FlightPrice[],
   originCity: City
 ): BestValueResult {
-  // TODO: Implement this function
-  return buildErrorResult('Not implemented yet');
+  if (!allMatches || allMatches.length === 0) {
+    return buildErrorResult('No matches available');
+  }
+
+  // Try from largest possible combination down to minimum
+  const maxSize = allMatches.length;
+  let bestWithinBudget: { combination: MatchWithCity[]; cost: number } | null = null;
+  let closestOverBudget: { combination: MatchWithCity[]; cost: number } | null = null;
+
+  for (let targetSize = maxSize; targetSize >= MINIMUM_MATCHES; targetSize--) {
+    const combinations = generateValidCombinations(allMatches, targetSize);
+
+    for (const combination of combinations) {
+      const cost = calculateTotalCost(combination, originCity, flightPrices);
+
+      if (cost <= budget) {
+        // First result within budget at this size is the best
+        if (!bestWithinBudget) {
+          bestWithinBudget = { combination, cost };
+        }
+      } else {
+        // Track closest over-budget option as fallback
+        if (
+          !closestOverBudget ||
+          cost < closestOverBudget.cost
+        ) {
+          closestOverBudget = { combination, cost };
+        }
+      }
+    }
+
+    // Once a result within budget is located at largest possible size, stop
+    if (bestWithinBudget) break;
+  }
+
+  if (bestWithinBudget) {
+    return buildResult(
+      bestWithinBudget.combination,
+      bestWithinBudget.cost,
+      true,
+      budget,
+      originCity,
+      flightPrices
+    );
+  }
+
+  if (closestOverBudget) {
+    return buildResult(
+      closestOverBudget.combination,
+      closestOverBudget.cost,
+      false,
+      budget,
+      originCity,
+      flightPrices
+    );
+  }
+
+  return buildErrorResult(
+    'Could not find a valid combination covering all 3 countries with at least 5 matches'
+  );
 }
 
 // ============================================================
